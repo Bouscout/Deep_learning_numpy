@@ -1,6 +1,8 @@
 # Deep Learning Module with Numpy
 
-This Python module provides a lightweight deep learning framework implemented using only NumPy. It includes support for various activation functions, loss functions, and optimizers.
+This Python module provides a lightweight deep learning framework implemented using only NumPy. It includes support for various activation functions, loss functions, and optimizers.<br>
+
+All files in the master branch.
 
 ## Requirements
 python (3.11.0 version tested)<br>
@@ -74,7 +76,7 @@ model.create_model([
     layer_layout(10, 10),
     tanh(),
     layer_layout(10, 1),
-    linear()
+    tanh()
 ], l_r=0.005, optimizer="Adam")
 ```
 the input layer is created at the first feed_forward method or to prevent that behavior you can set
