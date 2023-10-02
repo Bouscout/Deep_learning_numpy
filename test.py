@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
-from network import network
-from activations import tanh, sigmoid, linear
-from optimizers import Adam
-from layer import layer_layout
+from DeepLearningNumpy.network import network
+from DeepLearningNumpy.activations import tanh, sigmoid, linear
+from DeepLearningNumpy.optimizers import Adam
+from DeepLearningNumpy.layer import layer_layout
 
 class TestYourModel(unittest.TestCase):
 

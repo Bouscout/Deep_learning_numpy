@@ -1,10 +1,10 @@
 import numpy as np
 from math import floor
 import random
-from activations import sigmoid, linear, softmax, tanh, Relu
-from layer import layer_layout
-from optimizers import SGD, RMSprop, Adam
-from loss_functions import *
+from .activations import sigmoid, linear, softmax, tanh, Relu
+from .layer import layer_layout
+from .optimizers import SGD, RMSprop, Adam
+from .loss_functions import *
 
 
 # this file will assemble all the components in order to make network easy to use
