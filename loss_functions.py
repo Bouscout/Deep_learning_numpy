@@ -1,8 +1,12 @@
 import numpy as np
 # this file would contain all the options for the different loss functions
 
+# when passing the gradients backwards, the shape of the original outputs should be preserved
+# ex : output shape = (1, 12) so gradient shape = (1, 12)
+
 def MSE(y_predict:np.ndarray , y_true:np.ndarray ) -> np.ndarray:
-    # mean squared error
+    """Mean Squared error :\n  
+    mse = (y_true - y_predict)**2 / batch_size"""
     error = np.mean(np.power(y_true - y_predict, 2))
     return error
 
@@ -16,6 +20,9 @@ def derivative_MSE(y_predict:np.ndarray, y_true:np.ndarray):
 
 # for multi classification problems
 def cross_entropy(y_predict: np.ndarray, y_true: np.ndarray) -> np.ndarray:
+    """
+    Cross entropy loss functions, the values should be passed in a one hot encoding format
+    """
     epsilon = 1e-10  # small value to avoid division by zero
     y_predict = np.clip(y_predict, epsilon, 1.0 - epsilon)  # clip values to avoid logarithm of zero
     # loss = -np.sum(y_true * np.log(y_predict)) / np.size(y_true)
@@ -83,7 +90,7 @@ def derivative_softmax_cross_entropy(y_predict:np.ndarray, y_true=np.ndarray) ->
 
     loss = np.log(softmax_output) * one_hot_label
 
-    loss = -np.mean(loss)
+    loss = -np.mean(loss, axis=0)
    
 
     return loss 

@@ -2,10 +2,10 @@ import numpy as np
 
 
 # this function will contain the logic for defining a layer of the network
-# we won't need to represent the neuron individually, they will just be considered by their indexes in the 
-# different arrays
+# we won't need to represent the neuron individually, they will just be considered by their indexes in the matrices
 
-# we assume the weight data would come from the previous layer
+
+# the layers informations needs to be provided
 
 class layer_layout:
     def __init__(self, input_size: int, output_size: int, optimizer=None, l_r:float = 0.001):
@@ -23,8 +23,9 @@ class layer_layout:
         self.level = 0
 
         # initializing optimizers for each parameter
-        self.weights_optimizer = optimizer(layer_shape=[self.input_size, self.output_size])
-        self.bias_optimizer = optimizer(layer_shape=[1, self.output_size])
+        if optimizer :
+            self.weights_optimizer = optimizer(layer_shape=[self.input_size, self.output_size])
+            self.bias_optimizer = optimizer(layer_shape=[1, self.output_size])
 
     def forward_propagation(self, data:np.array ) :
         # we assume input will arrive in the correct form from prv layer
@@ -36,6 +37,7 @@ class layer_layout:
         # output = z 
         output = z + self.bias
         
+        # useful for catching unstable values but can be commented out
         if np.any(np.isnan(output)) or np.any(np.isinf(output)):
            raise ValueError('one of the value is overflowing')
        
@@ -56,14 +58,15 @@ class layer_layout:
         gradient_column = gradient[:, None, :]
 
         weight_gradients = np.matmul(inputs, gradient_column)
+
         if average :
             weight_gradients = np.mean(weight_gradients, axis=0)
         else :
             weight_gradients = np.sum(weight_gradients, axis=0)
 
         if self.weights_optimizer :
-            step_sizes = self.weights_optimizer.find_step_size(weight_gradients, self.alpha)
-            self.weights -= step_sizes
+            step_size = self.weights_optimizer.find_step_size(weight_gradients, self.alpha)
+            self.weights -= step_size
         else :
             # SGD
             self.weights -= (learning_rate * weight_gradients) 
@@ -81,14 +84,17 @@ class layer_layout:
 
         return input_gradient_set
             
-    def initialize_relu_weights(self, input_size:int, output_size:int) -> np.ndarray:
+    def custom_weights_initialization(self, stddev=None) -> np.ndarray:
+        """
+        Initialize the weights using a normal distribution around 0 with a certain standard deviation
+        """
         # Calculate the standard deviation for the weights
-        stddev = np.sqrt(2.0 / input_size)
+        stddev = np.sqrt(2.0 / self.input_size) if not stddev else stddev
 
         # Initialize the weights with random values from a Gaussian distribution
-        weights = np.random.normal(0, stddev, (input_size, output_size))
+        weights = np.random.normal(0, stddev, self.weights.shape)
         self.weights = weights
-        return weights
+        self.bias = np.random.normal(0, stddev, self.bias.shape)
     
 
 

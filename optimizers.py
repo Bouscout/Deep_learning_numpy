@@ -77,5 +77,6 @@ class Adam(optimizer_layout):
     
     def reset_optimizer(self):
         self.speed = np.zeros(self.layer_shape)
+        self.iteration = 1
         return super().reset_optimizer()
 

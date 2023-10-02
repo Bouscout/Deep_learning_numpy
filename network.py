@@ -1,30 +1,26 @@
-from typing import Any
 import numpy as np
 from math import floor
 import random
-from neural_v3.activations import sigmoid, linear, softmax, tanh, Relu
-from neural_v3.layer import layer_layout
-from neural_v3.optimizers import SGD, RMSprop, Adam
-from neural_v3.loss_functions import *
+from activations import sigmoid, linear, softmax, tanh, Relu
+from layer import layer_layout
+from optimizers import SGD, RMSprop, Adam
+from loss_functions import *
 
 
 # this file will assemble all the components in order to make network easy to use
 
 class network():
-    def __init__(self, neurons:list, activation:str ='tanh', loss_func:str = 'MSE', learning_rate:float =0.01, optimizer:str="SGD") -> None:
+    def __init__(self, neurons:list=None, activation:str ='tanh', loss_func:str = 'MSE', *,learning_rate:float =0.01, optimizer:str="SGD") -> None:
+        """
+        Class to create and manage a full model with the forward, backward and training process being instantiable with simple methods\n
         
+        the layers are accessible in self.layers attributes, the activation layers in self.activ_layers
+        """
         self.learning_rate = learning_rate
         self.first_feed = False
         self.neurons = neurons # list of neurons at each layer
 
-        # choices for the activations layers
-        activations_choice = {
-            'sigmoid' : sigmoid,
-            'linear' : linear,
-            'tanh' : tanh,
-            'relu' : Relu,
-        }
-        self.activ_function = activations_choice[activation] # defining global activation layer
+       
  
         self.learning_rate = learning_rate
 
@@ -49,20 +45,58 @@ class network():
         # preparing the layers
         self.layers = []
         self.activ_layers = []
-        for num in range(len(neurons) - 1) :
-            self.layers.append(layer_layout(input_size=neurons[num], output_size=neurons[num+1], optimizer=self.optimizer_chosen, l_r=learning_rate))
 
-            # initializing the weight differently if relu
-            if activation == 'relu' :
-                layer = self.layers[num]
-                layer.weights = layer.initialize_relu_weights(input_size=neurons[num], output_size=neurons[num+1])  
-           
-            # activation layer
-            self.activ_layers.append(self.activ_function())
+        # if a quick creation layout has been provided
+        if neurons :
+             # choices for the activations layers
+            activations_choice = {
+                'sigmoid' : sigmoid,
+                'linear' : linear,
+                'tanh' : tanh,
+                'relu' : Relu,
+            }
+            self.activ_function = activations_choice[activation] # defining global activation layer
+
+            for num in range(len(neurons) - 1) :
+                self.layers.append(layer_layout(input_size=neurons[num], output_size=neurons[num+1], optimizer=self.optimizer_chosen, l_r=learning_rate))
+
+                # initializing the weight differently if relu
+                if activation == 'relu' :
+                    layer = self.layers[num]
+                    layer.custom_weights_initialization()  
+            
+                # activation layer
+                self.activ_layers.append(self.activ_function())
+
+    def create_model(self, layers:list, l_r:float, optimizer:str) :
+        """
+        Create a model from a list of layers and activations layers\n
+        All layer informations must be provided at their creation
+        """
+        optimizer_choices = {
+            'SGD' : SGD,
+            'RMSPROP' : RMSprop,
+            "ADAM" : Adam,
+        }
+
+        optim = optimizer_choices[optimizer.upper()]
+
+        self.layers = []
+        self.activ_layers = []
+        for i in range(0, len(layers), 2) :
+            layer = layers[i]
+            
+            layer.weights_optimizer = optim(layer.weights.shape)
+            layer.bias_optimizer = optim(layer.bias.shape)
+            layer.alpha = l_r
+
+            self.layers.append(layers[i])
+            self.activ_layers.append(layers[i+1])
+
         
 
     def feed(self, input: np.ndarray) -> np.ndarray:
-        # checking if first layer created
+        # checking if first layer created, if not create the neurons according to input shape
         if self.first_feed == False:
             output_size = self.layers[0].output_size
             self.layers[0] = layer_layout(input_size=input.shape[-1], 
@@ -74,7 +108,6 @@ class network():
 
         output = input
         for lay, activ in zip(self.layers, self.activ_layers) :
-        # for lay in self.layers  :
             non_active_output = lay.forward_propagation(output)
             output = activ.forward_propagation(non_active_output)
             
@@ -82,6 +115,7 @@ class network():
     
     # function to propagate the error backwards and adjust weight and bias
     def adjust(self, output_gradient:np.ndarray, average=True) -> None:
+        """Backpropagate the gradient"""
         gradient = output_gradient
         for activ, lay in zip(reversed(self.activ_layers) ,reversed(self.layers)):
             gradient_activ = activ.backward_propagation(gradient, self.learning_rate)
@@ -95,7 +129,6 @@ class network():
 
         X, Y = self.divide_batch(X, Y, batch_size, shuffle=shuffle) # data will be in batch of size batch_size
 
-        BATCH_SIZE = batch_size
         for _ in range(epochs):
 
             # for x, y in zip(X, Y) :
@@ -119,11 +152,6 @@ class network():
                     print()
 
                 self.adjust(gradients)
-
-
-       
-                
-              
 
         self.error = error
 
@@ -190,6 +218,10 @@ class network():
     
     # get models weights and bias
     def get_params(self):
+        """
+        Create an array of tuple containing the weights and bias values :\n
+        params = [(weights_layer_1, bias_layer_1), (weights_layer_2, bias_layer_2), ...]
+        """
         parameters = [0 for _ in range(len(self.layers))]
         for index, layer in enumerate(self.layers) :
             parameters[index] = (np.copy(layer.weights), np.copy(layer.bias))
@@ -197,6 +229,7 @@ class network():
         return parameters
     
     def reset_optimizers(self):
+        """Reset the inertie and momemtum of the optimizers"""
         for layer in self.layers :
             layer.weights_optimizer.reset_optimizer()
             layer.bias_optimizer.reset_optimizer()
@@ -215,9 +248,9 @@ class network():
         self.first_feed = True   
 
     # create a model with the received list of tuple of weights and bias as layers
-    def set_model_with_params(self, params):
+    def set_model_with_params_from_tf(self, params, activations:list):
         layer = []
-        activ_layer = []
+        activ_layer = activations
 
         for i in range(len(params)) :
             input_size, output_size = params[i][0].shape 
@@ -227,7 +260,6 @@ class network():
             layer_init.bias = params[i][1]
 
             layer.append(layer_init)
-            activ_layer.append(self.activ_function())
 
         self.layers = layer
         self.activ_layers = activ_layer
