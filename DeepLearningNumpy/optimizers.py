@@ -43,7 +43,8 @@ class RMSprop(optimizer_layout):
         step_size = (learning_rate / (np.sqrt(self.momentum) + epsilon)) * gradient
 
         return step_size
-    
+
+
 class Adam(optimizer_layout):
     def __init__(self, layer_shape) -> None:
         super().__init__(layer_shape)

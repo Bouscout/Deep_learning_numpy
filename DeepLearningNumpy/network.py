@@ -80,6 +80,7 @@ class network():
         }
 
         optim = optimizer_choices[optimizer.upper()]
+        self.optimizer_chosen = optim
 
         self.layers = []
         self.activ_layers = []
