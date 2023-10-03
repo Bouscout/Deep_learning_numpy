@@ -249,18 +249,20 @@ class network():
         self.first_feed = True   
 
     # create a model with the received list of tuple of weights and bias as layers
-    def set_model_with_params_from_tf(self, params, activations:list):
+    def load_model_with_params_from_tf(self, params, activations:list):
         layer = []
         activ_layer = activations
 
-        for i in range(len(params)) :
-            input_size, output_size = params[i][0].shape 
+        for i in range(0, len(params), 2) :
+            weights = params[i]
+            bias = params[i + 1]
 
-            layer_init = layer_layout(input_size, output_size, optimizer=self.optimizer_chosen, l_r=self.learning_rate)
-            layer_init.weights = params[i][0]
-            layer_init.bias = params[i][1]
+            layer_init = layer_layout(*weights.shape, optimizer=self.optimizer_chosen, l_r=self.learning_rate)
+            layer_init.weights = weights
+            layer_init.bias = bias
 
             layer.append(layer_init)
 
         self.layers = layer
         self.activ_layers = activ_layer
+        self.first_feed = True
