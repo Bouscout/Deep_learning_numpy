@@ -101,11 +101,14 @@ class network():
         # checking if first layer created, if not create the neurons according to input shape
         if self.first_feed == False:
             output_size = self.layers[0].output_size
-            self.layers[0] = layer_layout(input_size=input.shape[-1], 
-                                        output_size=output_size,
-                                        optimizer=self.optimizer_chosen,
-                                        l_r=self.learning_rate,
-                                        )
+            
+            self.layers[0] = layer_layout(
+                input_size=input.shape[-1],
+                output_size=output_size,
+                optimizer=self.optimizer_chosen,
+                l_r=self.learning_rate
+            )
+
             self.first_feed = True
 
         output = input
