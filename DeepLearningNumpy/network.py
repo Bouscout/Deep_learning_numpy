@@ -5,6 +5,7 @@ from .activations import sigmoid, linear, softmax, tanh, Relu
 from .layer import layer_layout
 from .optimizers import SGD, RMSprop, Adam
 from .loss_functions import *
+from .utils import shuffler, divide_batch
 
 
 # this file will assemble all the components in order to make network easy to use
@@ -55,7 +56,7 @@ class network():
                 'tanh' : tanh,
                 'relu' : Relu,
             }
-            self.activ_function = activations_choice[activation] # defining global activation layer
+            activ_function = activations_choice[activation] # defining global activation layer
 
             for num in range(len(neurons) - 1) :
                 self.layers.append(layer_layout(input_size=neurons[num], output_size=neurons[num+1], optimizer=self.optimizer_chosen, l_r=learning_rate))
@@ -66,7 +67,7 @@ class network():
                     layer.custom_weights_initialization()  
             
                 # activation layer
-                self.activ_layers.append(self.activ_function())
+                self.activ_layers.append(activ_function())
 
     def create_model(self, layers:list, l_r:float, optimizer:str) :
         """
@@ -128,29 +129,19 @@ class network():
 
         loss_function, loss_function_derivative = self.loss_function
 
-        X, Y = self.divide_batch(X, Y, batch_size, shuffle=shuffle) # data will be in batch of size batch_size
+        if shuffle :
+            X, Y = shuffler(X, Y) # shuffling the datapoint whiling maintaining the relationship
+       
 
         for _ in range(epochs):
-
-            # for x, y in zip(X, Y) :
-            for index in range(len(X)) :
-                # array of length batch_size
-                x_batch = X[index] 
-                y_batch = Y[index]
-
+            for x_batch, y_batch in divide_batch(X, Y, batch_size) :
                 output = x_batch
 
                 output = self.feed(input=output)
 
-                if np.any(np.isnan(output)) or np.any(np.isinf(output)) :
-                    print()
-
                 #error and backprog
-                error = np.mean(loss_function(output, y_batch))
+                error = loss_function(output, y_batch)
                 gradients = loss_function_derivative(output, y_batch)
-
-                if np.any(np.isnan(gradients)) or np.any(np.isinf(gradients)) :
-                    print()
 
                 self.adjust(gradients)
 
@@ -166,57 +157,6 @@ class network():
     def __call__(self, input:np.ndarray) -> np.ndarray:
         return self.predict(input=input)
 
-        
-    def divide_batch(self, x_data:np.ndarray, y_data:np.ndarray, size:int, shuffle:bool = False) :
-        # checking if divisble
-        if len(x_data) % size != 0 :
-            raise ValueError('the number of datapoint is not perfectly divisble by the size of batches')
-
-        # an array shuffler :
-        def shuffler(arr1, arr2):
-            current_index = len(arr1)
-            random_index = len(arr1)
-            # while there are still elements to shuffle
-            while current_index != 0 :
-                random_index = floor((random.random() * current_index)) 
-                current_index -= 1
-
-                # swapping them
-                arr1[current_index], arr1[random_index] = arr1[random_index], arr1[current_index]
-
-                # swapping the y arrays with the same index
-                arr2[current_index], arr2[random_index] = arr2[random_index], arr2[current_index]
-
-            return (arr1, arr2)
-        
-        if shuffle :
-            x_data, y_data = shuffler(x_data, y_data)
-
-        # declaring the container arrays
-        x_shape = x_data.shape
-        x_shape = (int((len(x_data)/size)), size, *x_shape[1:])
-        x_batch = np.zeros(shape=x_shape)
-
-        # for y
-        y_shape = y_data.shape
-        y_batch = np.zeros(shape=(int(len(y_data)/size), size, *y_shape[1:]))
-
-
-        batch_index = 0
-        for index in range(int(len(x_data) / size)) :
-            # assigin the x batch
-            subset_x = x_data[batch_index:batch_index + size]
-            x_batch[index] = subset_x
-
-            # for y
-            subset_y = y_data[batch_index:batch_index + size]
-            y_batch[index] = subset_y
-
-            #incrementing
-            batch_index += size
-
-        return (x_batch, y_batch)
-    
     # get models weights and bias
     def get_params(self):
         """
@@ -249,7 +189,18 @@ class network():
         self.first_feed = True   
 
     # create a model with the received list of tuple of weights and bias as layers
-    def load_model_with_params_from_tf(self, params, activations:list):
+    def load_model_from_paramsList(self, params:list, activations:list):
+        """
+        Load a model from tensorflow or pytorch using their respective function to access the model parameters.\n
+
+        the params need to come in the form params = [weights_l1, bias_l1, weights_l2, bias_l2, ...]\n
+        
+        the number of activations needs to match the structure of the model \n
+
+        the params need to be converted to numpy before being passed to this method.\n
+
+        the model learning rate and optimizer need to be specified before calling the method
+        """
         layer = []
         activ_layer = activations
 
