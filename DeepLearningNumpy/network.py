@@ -211,7 +211,7 @@ class network():
 
             layer_init = layer_layout(*weights.shape, optimizer=self.optimizer_chosen, l_r=self.learning_rate)
             layer_init.weights = weights
-            layer_init.bias = bias
+            layer_init.bias = bias.reshape(1, -1)
 
             layer.append(layer_init)
 

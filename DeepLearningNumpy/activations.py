@@ -1,12 +1,21 @@
 import numpy as np
+from abc import ABC, abstractmethod
 
 # this file will contain all the activation function possible that we 
 # will place between the layers
 
-class activation:
+class activation(ABC):
     def __init__(self) :
         self.input = None
         self.output = None
+    
+    @abstractmethod
+    def forward_propagation(self, data:np.ndarray) -> np.ndarray:
+        """Forward method"""
+
+    @abstractmethod
+    def backward_propagation(self, output_gradient:np.ndarray, learning_gradient:float) -> np.ndarray:
+        """Backward method"""
 
 # all values between -1 and 1
 class tanh(activation):
@@ -96,11 +105,11 @@ class softmax(activation):
     def __repr__(self) -> str:
         return "softmax"  
 
-    def forward_propagation(self, logits:np.ndarray):
-        self.input = logits
+    def forward_propagation(self, data:np.ndarray):
+        self.input = data
 
         # Compute softmax values for each batch
-        exp_data = np.exp(logits)
+        exp_data = np.exp(data)
         softmax_output = exp_data / np.sum(exp_data, axis=1, keepdims=True)
 
         self.output = softmax_output
