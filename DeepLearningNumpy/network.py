@@ -21,8 +21,6 @@ class network():
         self.first_feed = False
         self.neurons = neurons # list of neurons at each layer
 
-       
- 
         self.learning_rate = learning_rate
 
         # declaring the loss function

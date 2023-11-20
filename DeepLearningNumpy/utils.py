@@ -27,11 +27,10 @@ def divide_batch(x_data: np.ndarray, y_data: np.ndarray, batch_size: int):
     batch = batch_size
 
     while batch <= size:
-        index = batch - batch_size
+        index = batch - batch_size 
         yield (x_data[index:batch], y_data[index:batch])
         batch += batch_size
 
-    else:
-        last = batch - batch_size
-        if last < size:
-            yield (x_data[last:size], y_data[last:size])
+    last = batch - batch_size
+    if last < size:
+        yield (x_data[last:size], y_data[last:size])

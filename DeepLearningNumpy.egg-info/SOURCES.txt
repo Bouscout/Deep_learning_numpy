@@ -1,0 +1,14 @@
+README.md
+setup.py
+DeepLearningNumpy/__init__.py
+DeepLearningNumpy/activations.py
+DeepLearningNumpy/layer.py
+DeepLearningNumpy/loss_functions.py
+DeepLearningNumpy/network.py
+DeepLearningNumpy/optimizers.py
+DeepLearningNumpy/utils.py
+DeepLearningNumpy.egg-info/PKG-INFO
+DeepLearningNumpy.egg-info/SOURCES.txt
+DeepLearningNumpy.egg-info/dependency_links.txt
+DeepLearningNumpy.egg-info/requires.txt
+DeepLearningNumpy.egg-info/top_level.txt

@@ -8,6 +8,11 @@ All files in the master branch.
 python (3.11.0 version tested)<br>
 numpy (1.24.2 version tested)
 
+To install in your environment run the command:
+```
+pip install .\dist\DeepLearningNumpy-0.0.1.tar.gz
+```
+
 ## Usage
 
 ### Dense Layer
