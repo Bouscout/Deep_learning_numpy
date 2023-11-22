@@ -3,7 +3,6 @@ import random
 from math import floor
 import numpy as np
 
-
 # an array shuffler :
 def shuffler(arr1, arr2):
     current_index = len(arr1)

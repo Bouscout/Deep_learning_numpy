@@ -62,7 +62,7 @@ class Relu(activation) :
         return self.forward_propagation(data)
     
     def __repr__(self) -> str:
-        return "Relu"
+        return "relu"
 
     def forward_propagation(self, data) :
         self.input = data

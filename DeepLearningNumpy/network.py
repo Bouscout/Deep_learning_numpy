@@ -1,6 +1,6 @@
 import numpy as np
-from math import floor
-import random
+import enum
+import pickle
 from .activations import sigmoid, linear, softmax, tanh, Relu
 from .layer import layer_layout
 from .optimizers import SGD, RMSprop, Adam
@@ -11,7 +11,7 @@ from .utils import shuffler, divide_batch
 # this file will assemble all the components in order to make network easy to use
 
 class network():
-    def __init__(self, neurons:list=None, activation:str ='tanh', loss_func:str = 'MSE', *,learning_rate:float =0.01, optimizer:str="SGD") -> None:
+    def __init__(self, neurons:list = None, activation:str ='tanh', loss_func:str = 'MSE', *,learning_rate:float =0.01, optimizer:str="SGD") -> None:
         """
         Class to create and manage a full model with the forward, backward and training process being instantiable with simple methods\n
         
@@ -189,8 +189,11 @@ class network():
             
         self.first_feed = True   
 
-    # create a model with the received list of tuple of weights and bias as layers
-    def load_model_from_paramsList(self, params:list, activations:list):
+    # ----------------- Trained Models ---------------------
+
+
+     # create a model with the received list of tuple of weights and bias as layers
+    def load_model_from_paramsList(self, params:list, activations:list, torch:bool = False):
         """
         Load a model from tensorflow or pytorch using their respective function to access the model parameters.\n
 
@@ -209,8 +212,14 @@ class network():
             weights = params[i]
             bias = params[i + 1]
 
-            layer_init = layer_layout(*weights.shape, optimizer=self.optimizer_chosen, l_r=self.learning_rate)
-            layer_init.weights = weights
+            # pytorch inverse the order in the matrix
+            if torch :
+                layer_init = layer_layout(*reversed(weights.shape), optimizer=self.optimizer_chosen, l_r=self.learning_rate)
+                layer_init.weights = weights.T
+            else :
+                layer_init = layer_layout(*weights.shape, optimizer=self.optimizer_chosen, l_r=self.learning_rate)
+                layer_init.weights = weights
+            
             layer_init.bias = bias.reshape(1, -1)
 
             layer.append(layer_init)
@@ -218,3 +227,41 @@ class network():
         self.layers = layer
         self.activ_layers = activ_layer
         self.first_feed = True
+
+
+    def save_model(self, file_path:str):
+        params = []
+        for layer in self.layers :
+            params.append(layer.weights)
+            params.append(layer.bias)
+
+        activations = [repr(activ) for activ in self.activ_layers]
+
+        with open(file_path, "wb") as f :
+            pickle.dump([params, activations], f)
+        print("model saved at ", file_path)
+
+    
+    def load_model(self, file_path) :
+        """
+        Load the model from a file containing :\n
+        >>> (list[numpyWeights, bias, weights ...], list["tanh", "tanh", "sigmoid"])
+        """
+        activations = {
+            "sigmoid" : sigmoid,
+            "tanh" : tanh,
+            "relu" : Relu,
+            "softmax" : softmax,
+            "linear" : linear,
+        }
+        with open(file_path, "rb") as f :
+            params_activ = pickle.load(f)
+        
+        self.load_model_from_paramsList(
+            params_activ[0] ,# weights and bias
+            [activations[x.lower()]() for x in params_activ[1]] # activations layers
+        )
+
+        print("model loaded from ", file_path)
+
+        

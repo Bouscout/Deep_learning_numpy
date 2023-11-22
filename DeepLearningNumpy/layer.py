@@ -1,4 +1,6 @@
+from typing import Any
 import numpy as np
+from .errors import ValueOverflowingError
 
 
 # this function will contain the logic for defining a layer of the network
@@ -27,6 +29,14 @@ class layer_layout:
             self.weights_optimizer = optimizer(layer_shape=[self.input_size, self.output_size])
             self.bias_optimizer = optimizer(layer_shape=[1, self.output_size])
 
+    def __call__(self, data:np.ndarray) -> np.ndarray:
+        """
+        perform the operations : \n
+        >>> z = matmul(data, weights)
+        >>> output = z + bias
+        """
+        return self.forward_propagation(data=data)
+
     def forward_propagation(self, data:np.array ) :
         # we assume input will arrive in the correct form from prv layer
         # we perform a matrix multiplication with the weights on this layer
@@ -39,7 +49,7 @@ class layer_layout:
         
         # useful for catching unstable values but can be commented out
         if np.any(np.isnan(output)) or np.any(np.isinf(output)):
-           raise ValueError('one of the value is overflowing')
+           raise ValueOverflowingError('one of the value is overflowing')
        
         return output
 
